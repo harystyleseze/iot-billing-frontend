@@ -17,24 +17,30 @@ export const nonceStore = new Map<string, NonceEntry>();
 export const sessionStore = new Map<string, SessionEntry>();
 
 // Cleanup expired nonces every 10 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of nonceStore.entries()) {
-    if (now > value.expiresAt) {
-      nonceStore.delete(key);
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, value] of nonceStore.entries()) {
+      if (now > value.expiresAt) {
+        nonceStore.delete(key);
+      }
     }
-  }
-}, 10 * 60 * 1000);
+  },
+  10 * 60 * 1000,
+);
 
 // Cleanup expired or inactive sessions every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  const HEARTBEAT_TIMEOUT = 60_000; // 60 seconds
-  
-  for (const [key, value] of sessionStore.entries()) {
-    // Remove if expired or no heartbeat for too long
-    if (now > value.expiresAt || now - value.lastHeartbeat > HEARTBEAT_TIMEOUT) {
-      sessionStore.delete(key);
+setInterval(
+  () => {
+    const now = Date.now();
+    const HEARTBEAT_TIMEOUT = 60_000; // 60 seconds
+
+    for (const [key, value] of sessionStore.entries()) {
+      // Remove if expired or no heartbeat for too long
+      if (now > value.expiresAt || now - value.lastHeartbeat > HEARTBEAT_TIMEOUT) {
+        sessionStore.delete(key);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  },
+  5 * 60 * 1000,
+);

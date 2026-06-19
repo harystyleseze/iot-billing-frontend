@@ -59,13 +59,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   // Instant wallet disconnection detection using WatchWalletChanges
   useEffect(() => {
     const watcher = new WatchWalletChanges(1000); // Poll every 1 second for instant detection
-    
+
     watcher.watch((event) => {
       // Handle wallet lock, disconnection, or account change
       // If no address or different address, wallet was disconnected/changed
       if (!event.address || event.address !== publicKeyRef.current) {
         const previousKey = publicKeyRef.current;
-        
+
         generationRef.current += 1;
         abortControllerRef.current?.abort();
         abortControllerRef.current = null;
@@ -73,10 +73,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setMetrics(null);
         setError(null);
         setIsConnecting(false);
-        
+
         // Immediately clear all cached data
         queryClient.clear();
-        
+
         // Logout from backend if we had a session
         if (previousKey) {
           void (async () => {
@@ -91,7 +91,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
               // best-effort cleanup
             }
           })();
-          
+
           // Trigger callback for session monitor
           disconnectCallbackRef.current?.();
         }
@@ -107,7 +107,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         queryClient.clear();
       }
     });
-    
+
     return () => {
       watcher.stop();
     };
@@ -160,7 +160,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const disconnect = useCallback(async () => {
     const previousKey = publicKeyRef.current;
-    
+
     generationRef.current += 1;
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
@@ -168,7 +168,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setMetrics(null);
     setError(null);
     queryClient.clear();
-    
+
     // Logout from backend
     if (previousKey) {
       try {

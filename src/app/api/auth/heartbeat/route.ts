@@ -16,7 +16,7 @@ function getPublicKeyFromJWT(jwt: string): string | null {
     const parts = jwt.split('.');
     const payload = parts[0];
     if (!payload) return null;
-    
+
     const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'));
     return decoded.sub || null;
   } catch {
@@ -30,54 +30,36 @@ export async function GET(request: NextRequest) {
     const jwt = extractJWTFromHeader(authHeader);
 
     if (!jwt) {
-      return NextResponse.json(
-        { error: 'Authorization header required' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Authorization header required' }, { status: 401 });
     }
 
     // Extract public key from JWT
     const publicKey = getPublicKeyFromJWT(jwt);
     if (!publicKey) {
-      return NextResponse.json(
-        { error: 'Invalid JWT format' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid JWT format' }, { status: 401 });
     }
 
     // Check if session exists
     const session = sessionStore.get(publicKey);
     if (!session) {
-      return NextResponse.json(
-        { error: 'Session not found' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Session not found' }, { status: 401 });
     }
 
     // Verify JWT matches
     if (session.jwt !== jwt) {
-      return NextResponse.json(
-        { error: 'Invalid JWT' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid JWT' }, { status: 401 });
     }
 
     // Check if session expired
     if (Date.now() > session.expiresAt) {
       sessionStore.delete(publicKey);
-      return NextResponse.json(
-        { error: 'Session expired' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Session expired' }, { status: 401 });
     }
 
     // Check if last heartbeat was too long ago
     if (Date.now() - session.lastHeartbeat > HEARTBEAT_TIMEOUT) {
       sessionStore.delete(publicKey);
-      return NextResponse.json(
-        { error: 'Session timeout due to inactivity' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Session timeout due to inactivity' }, { status: 401 });
     }
 
     // Update last heartbeat
@@ -86,13 +68,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       { success: true, lastHeartbeat: session.lastHeartbeat },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error('Error processing heartbeat:', error);
-    return NextResponse.json(
-      { error: 'Failed to process heartbeat' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to process heartbeat' }, { status: 500 });
   }
 }

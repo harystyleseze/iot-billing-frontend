@@ -7,25 +7,19 @@ export async function POST(request: NextRequest) {
     const { publicKey } = body;
 
     if (!publicKey) {
-      return NextResponse.json(
-        { error: 'publicKey is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'publicKey is required' }, { status: 400 });
     }
 
     // Remove session from store
     sessionStore.delete(publicKey);
 
-    return NextResponse.json(
-      { success: true, message: 'Session terminated' },
-      { status: 200 }
-    );
+    return NextResponse.json({ success: true, message: 'Session terminated' }, { status: 200 });
   } catch (error) {
     console.error('Error during logout:', error);
     // Return success even on error (best-effort cleanup)
     return NextResponse.json(
       { success: true, message: 'Session cleanup attempted' },
-      { status: 200 }
+      { status: 200 },
     );
   }
 }

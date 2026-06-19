@@ -49,7 +49,7 @@ export function useWeb3Auth() {
       const signedChallenge = await signChallenge(publicKey, nonce);
       const session = await verifySignature({ publicKey, signedChallenge, nonce });
       await cachePut('authSession', publicKey, session);
-      
+
       // Start session monitor with heartbeat
       startSessionMonitor(publicKey, {
         onExpired: () => {
@@ -58,7 +58,7 @@ export function useWeb3Auth() {
         },
         queryClient,
       });
-      
+
       return session;
     },
     onSuccess: (session) => {
@@ -69,7 +69,7 @@ export function useWeb3Auth() {
   const logoutMutation = useMutation({
     mutationFn: async (publicKey: string) => {
       stopSessionMonitor();
-      
+
       await fetch('/api/auth/logout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

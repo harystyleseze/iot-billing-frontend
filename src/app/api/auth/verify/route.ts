@@ -10,13 +10,13 @@ function generateJWT(publicKey: string, expiresAt: number): string {
       sub: publicKey,
       exp: Math.floor(expiresAt / 1000),
       iat: Math.floor(Date.now() / 1000),
-    })
+    }),
   ).toString('base64url');
-  
+
   const signature = createHash('sha256')
     .update(payload + process.env.JWT_SECRET || 'dev-secret-change-in-production')
     .digest('base64url');
-  
+
   return `${payload}.${signature}`;
 }
 
@@ -25,11 +25,11 @@ function verifySignature(publicKey: string, message: string, signature: string):
     // For Stellar, the signature verification requires the Stellar SDK
     // The Freighter wallet signs with the private key
     // We need to verify the signature matches the public key
-    
+
     // Convert signature from hex to Buffer
     const signatureBuffer = Buffer.from(signature, 'hex');
     const messageBuffer = Buffer.from(message, 'utf-8');
-    
+
     // Verify using Stellar SDK
     const keypair = Keypair.fromPublicKey(publicKey);
     return keypair.verify(messageBuffer, signatureBuffer);
@@ -48,49 +48,34 @@ export async function POST(request: NextRequest) {
     if (!publicKey || !signedChallenge || !nonce) {
       return NextResponse.json(
         { error: 'publicKey, signedChallenge, and nonce are required' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Validate Stellar public key format
     if (!StrKey.isValidEd25519PublicKey(publicKey)) {
-      return NextResponse.json(
-        { error: 'Invalid Stellar public key' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid Stellar public key' }, { status: 400 });
     }
 
     // Check if nonce exists and is valid
     const storedNonce = nonceStore.get(publicKey);
     if (!storedNonce) {
-      return NextResponse.json(
-        { error: 'Nonce not found or expired' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Nonce not found or expired' }, { status: 401 });
     }
 
     if (storedNonce.nonce !== nonce) {
-      return NextResponse.json(
-        { error: 'Invalid nonce' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid nonce' }, { status: 401 });
     }
 
     if (Date.now() > storedNonce.expiresAt) {
       nonceStore.delete(publicKey);
-      return NextResponse.json(
-        { error: 'Nonce expired' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Nonce expired' }, { status: 401 });
     }
 
     // Verify the signature
     const isValid = verifySignature(publicKey, nonce, signedChallenge);
     if (!isValid) {
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
     // Delete used nonce to prevent replay attacks
@@ -99,7 +84,7 @@ export async function POST(request: NextRequest) {
     // Create session
     const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
     const jwt = generateJWT(publicKey, expiresAt);
-    
+
     sessionStore.set(publicKey, {
       jwt,
       expiresAt,
@@ -117,9 +102,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(session, { status: 200 });
   } catch (error) {
     console.error('Error verifying signature:', error);
-    return NextResponse.json(
-      { error: 'Failed to verify signature' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to verify signature' }, { status: 500 });
   }
 }

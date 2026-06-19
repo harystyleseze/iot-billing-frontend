@@ -20,7 +20,7 @@ async function terminateSession(publicKey: string, queryClient?: QueryClient): P
     // best-effort server logout
   }
   await cacheClear('authSession');
-  
+
   // Clear all query cache if available
   if (queryClient) {
     queryClient.clear();
@@ -32,10 +32,10 @@ async function sendHeartbeat(jwt: string): Promise<boolean> {
     const response = await fetch('/api/auth/heartbeat', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${jwt}`,
+        Authorization: `Bearer ${jwt}`,
       },
     });
-    
+
     if (response.ok) {
       lastHeartbeatTime = Date.now();
       return true;
@@ -58,7 +58,7 @@ export interface SessionMonitorOptions {
  */
 export function startSessionMonitor(
   publicKey: string,
-  options?: SessionMonitorOptions
+  options?: SessionMonitorOptions,
 ): () => void {
   if (heartbeatInterval) {
     clearInterval(heartbeatInterval);
@@ -70,7 +70,7 @@ export function startSessionMonitor(
   heartbeatInterval = setInterval(async () => {
     try {
       const session = await cacheGet<Web3AuthSession>('authSession', publicKey);
-      
+
       // No session found
       if (!session) {
         onExpired?.();
@@ -88,7 +88,7 @@ export function startSessionMonitor(
 
       // Send heartbeat to backend
       const heartbeatSuccess = await sendHeartbeat(session.jwt);
-      
+
       if (!heartbeatSuccess) {
         // Heartbeat failed - session might be invalid on backend
         await terminateSession(publicKey, queryClient);
